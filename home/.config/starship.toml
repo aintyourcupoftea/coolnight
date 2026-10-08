@@ -1,0 +1,149 @@
+# ╔══════════════════════════════════════════════════════════════════════╗
+# ║  starship · coolnight neon                                           ║
+# ║  ╭─  apple ▸ path ▸ git ▸ toolchain ······················ ⏱ time   ║
+# ║  ╰─❯                                                                 ║
+# ╚══════════════════════════════════════════════════════════════════════╝
+"$schema" = "https://starship.rs/config-schema.json"
+add_newline = true
+command_timeout = 800
+
+format = """
+[╭─](#214969)\
+[](#47FF9C)\
+$os\
+$username\
+$hostname\
+[](fg:#47FF9C bg:#0FC5ED)\
+$directory\
+[](fg:#0FC5ED bg:#214969)\
+$git_branch\
+$git_state\
+$git_status\
+[](fg:#214969 bg:#033259)\
+$nodejs\
+$python\
+$rust\
+$golang\
+$java\
+$bun\
+$docker_context\
+[](fg:#033259)\
+$fill\
+$cmd_duration\
+$jobs\
+$time
+[╰─](#214969)$character"""
+
+[fill]
+symbol = " "
+
+[os]
+disabled = false
+style = "bg:#47FF9C fg:#011423"
+format = "[$symbol]($style)"
+[os.symbols]
+Macos = " "
+
+[username]
+show_always = false
+style_user = "bg:#47FF9C fg:#011423 bold"
+style_root = "bg:#47FF9C fg:#E52E2E bold"
+format = "[$user ]($style)"
+
+[hostname]
+ssh_only = true
+style = "bg:#47FF9C fg:#011423"
+format = "[@$hostname ]($style)"
+
+[directory]
+style = "bg:#0FC5ED fg:#011423 bold"
+format = "[ $path ]($style)[$read_only]($read_only_style)"
+truncation_length = 4
+truncation_symbol = "…/"
+truncate_to_repo = true
+read_only = " "
+read_only_style = "bg:#0FC5ED fg:#E52E2E"
+[directory.substitutions]
+"Documents" = " Documents"
+"Downloads" = " Downloads"
+"Desktop" = " Desktop"
+".config" = " .config"
+
+[git_branch]
+symbol = ""
+style = "bg:#214969 fg:#47FF9C"
+format = "[ $symbol $branch ]($style)"
+
+[git_state]
+style = "bg:#214969 fg:#FFE073 bold"
+format = "[\\($state( $progress_current/$progress_total)\\) ]($style)"
+
+[git_status]
+style = "bg:#214969 fg:#FFE073"
+format = "[($all_status$ahead_behind )]($style)"
+conflicted = "$count "
+ahead = "⇡$count "
+behind = "⇣$count "
+diverged = "⇕⇡$ahead_count⇣$behind_count "
+untracked = "?$count "
+stashed = " "
+modified = "!$count "
+staged = "+$count "
+renamed = "»$count "
+deleted = "✘$count "
+
+[nodejs]
+symbol = ""
+style = "bg:#033259 fg:#44FFB1"
+format = "[ $symbol ($version) ]($style)"
+
+[python]
+symbol = ""
+style = "bg:#033259 fg:#FFE073"
+format = "[ $symbol ($version)( \\($virtualenv\\)) ]($style)"
+
+[rust]
+symbol = ""
+style = "bg:#033259 fg:#FF5C5C"
+format = "[ $symbol ($version) ]($style)"
+
+[golang]
+symbol = ""
+style = "bg:#033259 fg:#24EAF7"
+format = "[ $symbol ($version) ]($style)"
+
+[java]
+symbol = ""
+style = "bg:#033259 fg:#FF5C5C"
+format = "[ $symbol ($version) ]($style)"
+
+[bun]
+symbol = ""
+style = "bg:#033259 fg:#FFEBA1"
+format = "[ $symbol ($version) ]($style)"
+
+[docker_context]
+symbol = ""
+style = "bg:#033259 fg:#0FC5ED"
+format = "[ $symbol $context ]($style)"
+
+[cmd_duration]
+min_time = 2000
+style = "fg:#FFE073"
+format = "[ $duration ]($style)"
+
+[jobs]
+symbol = ""
+style = "fg:#A277FF"
+format = "[$symbol $number ]($style)"
+
+[time]
+disabled = false
+time_format = "%H:%M"
+style = "fg:#3B6E8F"
+format = "[ $time]($style)"
+
+[character]
+success_symbol = "[❯](bold #47FF9C)"
+error_symbol = "[❯](bold #E52E2E)"
+vimcmd_symbol = "[❮](bold #A277FF)"
