@@ -19,14 +19,16 @@
 #   --force         push or add even when something looks off
 #
 # The configs live in ~/.config/coolnight/home and are symlinked into place,
-# so editing ~/.zshrc edits the repo. Whatever they replace is moved to
-# ~/.local/state/coolnight/<date>/backup/ first, never deleted.
+# so editing ~/.zshrc edits the repo. Apps that rewrite their own config
+# (OmniWM) get synced copies instead, listed in copied-files.txt. Whatever
+# gets replaced is moved to ~/.local/state/coolnight/<date>/backup/ first.
 #
 # Written for macOS's stock bash 3.2, and safe to pipe into bash.
 
 REPO_URL=${COOLNIGHT_REPO:-https://github.com/aintyourcupoftea/coolnight}
 REPO_DIR=$HOME/.config/coolnight
 STATE_ROOT=$HOME/.local/state/coolnight
+COPY_LIST=copied-files.txt
 TOOLS="starship eza bat fd ripgrep fzf zoxide fastfetch gh git-delta lazygit btop yazi zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search"
 BINARIES="starship eza bat fd rg fzf zoxide fastfetch gh delta lazygit btop yazi"
 PLUGINS="zsh-autosuggestions zsh-syntax-highlighting zsh-completions zsh-history-substring-search"
@@ -208,6 +210,8 @@ have_font() {
   return 1
 }
 ghostty_running() { ps -axo comm= | grep -q '/Ghostty.app/Contents/MacOS/ghostty$'; }
+have_omniwm() { [[ -d /Applications/OmniWM.app || -d $HOME/Applications/OmniWM.app ]]; }
+omniwm_running() { ps -axo comm= | grep -q '/OmniWM.app/Contents/MacOS/'; }
 macos_major() { sw_vers -productVersion | cut -d. -f1; }
 
 # /usr/bin/git is only a stub that pops up an installer until Apple's
@@ -307,6 +311,13 @@ install_packages() {
   else
     warn "the font didn't install, so icons show as boxes; try: brew install --cask font-fira-code-nerd-font"
   fi
+  if have_omniwm; then
+    have "OmniWM" "already installed"
+  elif step "OmniWM (tiling window manager)" retry 2 "$BREW" install --cask omniwm; then
+    OMNIWM_NEW=1
+  else
+    warn "OmniWM didn't install; try: brew install --cask omniwm"
+  fi
 
   # zerobrew: the fast installer for the command-line tools. Its own shell
   # setup is already in the synced ~/.zshrc, so it must not append another
@@ -354,6 +365,7 @@ ensure_repo() {
   REPO=$REPO_DIR
   if [[ -d $REPO/.git ]]; then
     # running the one-liner again also updates, unless there's unpushed work
+    copy_in
     if [[ -n $(git -C "$REPO" status --porcelain 2>/dev/null) ]]; then
       have "coolnight repo" "has local changes, so not updating (coolnight push first)"
     else
@@ -371,8 +383,99 @@ ensure_repo() {
   step "coolnight repo → $(tildify "$REPO")" clone_repo || die "couldn't download $REPO_URL; the log is at $(tildify "$LOG")"
 }
 
-tracked_files() {  # every file under home/, relative to it
-  (cd "$REPO/home" && find . \( -type f -o -type l \) ! -name .DS_Store | sed 's|^\./||' | sort)
+# files synced as copies (copied-files.txt), not links
+copied_files() {
+  [[ -f $REPO/$COPY_LIST ]] || return 0
+  grep -v -E '^[[:space:]]*(#|$)' "$REPO/$COPY_LIST"
+}
+
+tracked_files() {  # every file under home/ that gets a link, relative to it
+  local copies
+  copies=$(copied_files)
+  (cd "$REPO/home" && find . \( -type f -o -type l \) ! -name .DS_Store | sed 's|^\./||' | sort) |
+    if [[ -n $copies ]]; then grep -v -x -F "$copies"; else cat; fi
+}
+
+# ─── Synced copies ──────────────────────────────────────────────────────
+# For each copy, this Mac remembers the hash it had at the last sync (the
+# base), like git does: changed only here → push picks it up; changed only
+# in the repo → it's written in place, so the app's file watcher sees a
+# normal save; changed in both → this Mac's version is kept, with a warning.
+BASES=$STATE_ROOT/copies.base
+
+sha_of() { [[ -f $1 ]] && shasum -a 256 "$1" | cut -d' ' -f1; }
+sha_committed() {  # the hash of home/<path> as last committed, if it is
+  git -C "$REPO" cat-file -e "HEAD:home/$1" 2>/dev/null || return 0
+  git -C "$REPO" show "HEAD:home/$1" | shasum -a 256 | cut -d' ' -f1
+}
+base_of() { [[ -f $BASES ]] && awk -v p="$1" '{ h = $1; $1 = ""; sub(/^ +/, ""); if ($0 == p) print h }' "$BASES"; }
+set_base() {  # set_base <path> <hash>
+  local tmp
+  mkdir -p "$STATE_ROOT" && tmp=$(mktemp "${TMPDIR:-/tmp}/coolnight-base.XXXXXX") || return 1
+  {
+    [[ -f $BASES ]] && awk -v p="$1" '{ h = $1; $1 = ""; sub(/^ +/, ""); if ($0 != p) print h "  " $0 }' "$BASES"
+    echo "$2  $1"
+  } >"$tmp" && mv "$tmp" "$BASES"
+}
+
+copy_in() {  # this Mac's edits to synced copies → the repo
+  local rel live hl hc base
+  while IFS= read -r rel; do
+    [[ -n $rel ]] || continue
+    live=$HOME/$rel
+    [[ -f $live && ! -L $live ]] || continue
+    base=$(base_of "$rel")
+    [[ -n $base ]] || continue   # never synced here yet: the repo's copy wins
+    hl=$(sha_of "$live")
+    [[ $hl == "$base" || $hl == "$(sha_of "$REPO/home/$rel")" ]] && continue
+    # changed here, and the repo's commits moved on too: copying this Mac's
+    # whole file in would quietly undo the other side's change, so don't
+    hc=$(sha_committed "$rel")
+    if [[ -n $hc && $hc != "$base" && -z $FORCE ]]; then
+      warn "~/$rel changed here and in the repo; merge by hand (compare it with $(tildify "$REPO/home/$rel")), or keep this Mac's with: coolnight push --force"
+      continue
+    fi
+    mkdir -p "$REPO/home/$(dirname "$rel")" && cp "$live" "$REPO/home/$rel"
+  done < <(copied_files)
+}
+
+mark_copies_synced() {  # after a commit: whatever matches the repo is now the base
+  local rel h
+  while IFS= read -r rel; do
+    [[ -n $rel ]] || continue
+    h=$(sha_of "$HOME/$rel")
+    [[ -n $h && $h == "$(sha_of "$REPO/home/$rel")" ]] && set_base "$rel" "$h"
+  done < <(copied_files)
+}
+
+copy_out() {  # the repo's synced copies → this Mac, where they changed
+  local rel live repo hl hr base n=0
+  while IFS= read -r rel; do
+    [[ -n $rel ]] || continue
+    live=$HOME/$rel repo=$REPO/home/$rel
+    [[ -f $repo ]] || continue
+    hr=$(sha_of "$repo") hl=$(sha_of "$live") base=$(base_of "$rel")
+    if [[ $hl == "$hr" ]]; then
+      [[ $base == "$hr" ]] || set_base "$rel" "$hr"
+      continue
+    fi
+    if [[ -n $base && -n $hl && $hl != "$base" ]]; then
+      # changed here; if the repo changed too, both did: keep this Mac's
+      [[ $hr == "$base" ]] || warn "~/$rel changed here and in the repo; kept this Mac's version (coolnight push keeps it everywhere)"
+      continue
+    fi
+    if [[ -e $live || -L $live ]]; then
+      mkdir -p "$BACKUP/$(dirname "$rel")" && cp -pP "$live" "$BACKUP/$rel" && STASHED=$((STASHED + 1))
+    fi
+    mkdir -p "$(dirname "$live")" || return 1
+    if [[ -f $live && ! -L $live ]]; then
+      cat "$repo" >"$live"   # in place, so the app's file watcher notices
+    else
+      rm -f "$live" && cp "$repo" "$live"
+    fi && set_base "$rel" "$hr" && n=$((n + 1))
+  done < <(copied_files)
+  ((n > 0)) && ok "synced copies updated · $(copied_files | join_lines)"
+  return 0
 }
 
 stash() {  # move ~/$1 into this run's backup folder
@@ -453,6 +556,7 @@ link_configs() {
     have "configs" "already linked"
   fi
   [[ -n $OLD_ZSHRC ]] && note "your old .zshrc is in ~/.zshrc.local, commented out: uncomment what you still need"
+  copy_out
   ensure_git_include
   return 0
 }
@@ -484,7 +588,7 @@ ensure_zsh_login() {
 # ─── Validation: a broken config never leaves this Mac ──────────────────
 # validate_configs <home dir>: prints "file: problem" for each broken config
 validate_configs() {
-  local h=$1 g err
+  local h=$1 g err f
   [[ -f $h/.zshrc ]] && { err=$(zsh -n "$h/.zshrc" 2>&1) || echo ".zshrc: ${err##*: }"; }
   if [[ -f $h/.config/ghostty/config ]] && g=$(ghostty_bin); then
     err=$("$g" +validate-config --config-file="$h/.config/ghostty/config" 2>&1) ||
@@ -498,6 +602,19 @@ validate_configs() {
     fastfetch -c "$h/.config/fastfetch/config.jsonc" --pipe true >/dev/null 2>&1 ||
       echo ".config/fastfetch/config.jsonc: not valid JSON"
   fi
+  # OmniWM rejects its whole settings file over one bad line; starship's TOML
+  # parser catches syntax errors in any TOML file
+  if command -v starship >/dev/null 2>&1; then
+    for f in .config/omniwm/settings.toml .config/yazi/yazi.toml; do
+      [[ -f $h/$f ]] || continue
+      err=$(STARSHIP_LOG=error STARSHIP_CONFIG="$h/$f" starship print-config 2>&1 >/dev/null)
+      [[ -z $err ]] || echo "$f: not valid TOML ($(echo "$err" | sed $'s/\033\\[[0-9;]*m//g' | grep -o 'line [0-9]*' | head -1))"
+    done
+  fi
+  for f in .config/macos-tweaks-apply.sh .config/macos-tweaks-undo.sh; do
+    [[ -f $h/$f ]] || continue
+    err=$(/bin/bash -n "$h/$f" 2>&1) || echo "$f: ${err##*: }"
+  done
   if [[ -f $h/.config/git/coolnight.gitconfig ]]; then
     git config --file "$h/.config/git/coolnight.gitconfig" --list >/dev/null 2>&1 ||
       echo ".config/git/coolnight.gitconfig: git can't parse it"
@@ -571,6 +688,7 @@ cmd_push() {
   acquire_lock
   require_gh
   setup_git_for_push
+  copy_in
   problems=$(validate_configs "$REPO/home")
   if [[ -n $problems && -z $FORCE ]]; then
     printf '  %s✘%s nothing pushed: these configs are broken, and would break the other Mac too\n' "$RED" "$RST"
@@ -594,6 +712,7 @@ cmd_push() {
     git -C "$REPO" commit --quiet -m "$msg (from $(computer_name))" || die "git commit failed"
     ok "saved · $msg"
   fi
+  mark_copies_synced
   sync_with_github
   if [[ $(git -C "$REPO" rev-list --count '@{u}..HEAD') -eq 0 ]]; then
     have "GitHub" "already up to date"
@@ -612,6 +731,7 @@ cmd_pull() {
   local problems l
   init_state sync
   acquire_lock
+  copy_in
   if [[ -n $(git -C "$REPO" status --porcelain) ]]; then
     die "this Mac has changes that aren't on GitHub yet; run coolnight push, which merges both sides"
   fi
@@ -634,6 +754,7 @@ cmd_pull() {
 cmd_status() {
   local changes behind ahead l p rel unlinked='' online=1
   printf '\n  %s%scoolnight%s %s%s ↔ %s%s\n\n' "$GRN" "$BLD" "$RST" "$DIM" "$(tildify "$REPO")" "${REPO_URL#https://}" "$RST"
+  copy_in
   if ! git -C "$REPO" fetch --quiet origin 2>/dev/null || ! git -C "$REPO" rev-parse '@{u}' >/dev/null 2>&1; then
     warn "couldn't reach GitHub, so this only shows this Mac"
     online=
@@ -727,6 +848,13 @@ cmd_doctor() {
     check_fail "Ghostty isn't installed" "coolnight"
   fi
   if have_font; then check_ok "FiraCode Nerd Font"; else check_fail "FiraCode Nerd Font is missing, so icons show as boxes" "coolnight"; fi
+  if ! have_omniwm; then
+    check_fail "OmniWM isn't installed" "coolnight"
+  elif omniwm_running; then
+    check_ok "OmniWM $(omniwmctl version 2>/dev/null | awk '{print $1}') is running"
+  else
+    check_warn "OmniWM is installed but not running" "open -a OmniWM (and turn on Start at Login in its Settings → General)"
+  fi
   if find_brew; then check_ok "Homebrew $("$BREW" --version 2>/dev/null | head -1 | awk '{print $2}')"; else check_fail "Homebrew isn't installed" "coolnight"; fi
   if find_zb; then check_ok "zerobrew $("$ZB" --version 2>/dev/null | awk '{print $2}')"; else check_warn "zerobrew isn't installed, so Homebrew handles the tools" "coolnight"; fi
 
@@ -752,9 +880,20 @@ cmd_doctor() {
       fi
     done < <(tracked_files)
     ((unlinked == 0)) && check_ok "all $linked configs linked from $(tildify "$REPO")"
+    copy_in
+    while IFS= read -r rel; do
+      [[ -n $rel ]] || continue
+      if [[ ! -f $HOME/$rel ]]; then
+        check_fail "~/$rel is missing" "coolnight"
+      elif [[ $(sha_of "$HOME/$rel") == "$(sha_of "$REPO/home/$rel")" ]]; then
+        check_ok "~/$rel matches the repo (synced copy)"
+      else
+        check_warn "~/$rel differs from the repo" "coolnight (puts the repo's version in place) or coolnight push (keeps this one)"
+      fi
+    done < <(copied_files)
     problems=$(validate_configs "$REPO/home")
     if [[ -z $problems ]]; then
-      check_ok "configs valid (zsh, Ghostty, starship, fastfetch, git)"
+      check_ok "configs valid (zsh, Ghostty, starship, fastfetch, git, OmniWM, yazi)"
     else
       while IFS= read -r l; do check_fail "broken: $l" "fix it, then coolnight push"; done <<<"$problems"
     fi
@@ -842,6 +981,7 @@ cmd_update() {
   curl -fsSI --max-time 10 https://github.com >/dev/null 2>&1 || die "no internet connection (couldn't reach github.com)"
 
   # configs first, so new tools they mention get installed below
+  copy_in
   if [[ -n $(git -C "$REPO" status --porcelain) ]]; then
     warn "configs not updated: this Mac has unpushed changes (coolnight push first)"
   else
@@ -943,6 +1083,9 @@ do_install() {
   printf '  %scheck%s    %scoolnight doctor%s any time something feels off\n' "$PRP" "$RST" "$CYN" "$RST"
   printf '  %sheads-up%s Ghostty asks for Accessibility once (for the cmd+` drop-down);\n' "$PRP" "$RST"
   printf '           allow notifications in System Settings → Notifications → Ghostty\n'
+  if [[ -n $OMNIWM_NEW ]] || { have_omniwm && ! omniwm_running; }; then
+    printf '           OmniWM needs Accessibility too; then turn on Start at Login in its Settings → General\n'
+  fi
   if [[ $TERM_PROGRAM != ghostty ]]; then
     printf '           use Ghostty from now on: other terminals lack the Nerd Font, so icons show as boxes\n'
   fi
@@ -957,6 +1100,9 @@ do_install() {
       open -a Ghostty && note "opening Ghostty…"
     fi
     printf '\n'
+  fi
+  if [[ -z $NO_OPEN ]] && have_omniwm && ! omniwm_running; then
+    open -a OmniWM && note "starting OmniWM…" && printf '\n'
   fi
   return 0
 }

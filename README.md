@@ -31,6 +31,10 @@ On a fresh Mac it takes 5–10 minutes, mostly for Apple's command line tools, a
 - Fish-style suggestions, syntax highlighting, a fuzzy Tab menu with previews ([fzf-tab](https://github.com/Aloxaf/fzf-tab)), fuzzy history, file and folder pickers in fzf's boxed style, smart `cd` ([zoxide](https://github.com/ajeetdsouza/zoxide))
 - eza for `ls`, with icons, git status and clickable names; bat for `cat`, man pages and `--help`; a daily fastfetch splash with usage bars
 
+**OmniWM**
+- [OmniWM](https://omniwm.app), a Niri-style scrolling tiling window manager, with my hotkeys, 19 workspaces (1–9 plus letters), app rules, gaps, the workspace bar and the drop-down terminal. Installed and started for you; `~/.config/omniwm/README.md` lists every key
+- Its `settings.toml` syncs as a **copy**, not a link, because OmniWM rewrites the file itself; changes from the other Mac are written in place, so OmniWM's live reload picks them up
+
 **Tools, all themed coolnight**
 - [delta](https://github.com/dandavison/delta) for git diffs: syntax highlighting, line numbers, clickable file names
 - [lazygit](https://github.com/jesseduffield/lazygit) (`lg`), [btop](https://github.com/aristocratos/btop) with a transparent background, [yazi](https://github.com/sxyazi/yazi) (`y`) with image previews
@@ -50,6 +54,8 @@ Type `keys` for the full cheat sheet.
 | <kbd>cmd</kbd>+<kbd>↑</kbd> <kbd>↓</kbd> | jump between prompts |
 | `y` · `lg` · `btop` | files · git · system monitor |
 | `fgl` · `fgb` | browse the git log with diffs · switch branch |
+| <kbd>alt</kbd>+<kbd>h</kbd><kbd>j</kbd><kbd>k</kbd><kbd>l</kbd> · <kbd>alt</kbd>+<kbd>1</kbd>…<kbd>9</kbd> | OmniWM: focus · workspaces (add <kbd>shift</kbd> to send the window there) |
+| <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>o</kbd> · <kbd>alt</kbd>+<kbd>shift</kbd>+<kbd>;</kbd> | OmniWM overview · command palette |
 
 ## Keeping Macs in sync
 
@@ -66,7 +72,7 @@ The configs live in `~/.config/coolnight/home/` and are symlinked into place, so
 | `coolnight restore` | list backups; `coolnight restore latest` brings the last one back |
 | `coolnight` | repair: re-link configs, reinstall what's missing |
 
-Pushing needs `gh auth login`, once per Mac.
+Pushing needs `gh auth login`, once per Mac. Files an app rewrites on its own are listed in `copied-files.txt` and synced as copies; if one changes on both Macs at once, coolnight keeps this Mac's version and asks you to merge instead of overwriting either.
 
 **Safety nets.** This repo is public, so `push` refuses anything that looks like a token, key or password, and also refuses configs that are broken (it checks them with zsh, Ghostty, starship, fastfetch and git), so a typo never reaches the other Mac. Keep secrets and machine-only settings in `~/.zshrc.local`, and your git name and email in `~/.gitconfig`; neither is ever synced. Only one coolnight runs at a time, and network steps retry instead of hanging.
 
@@ -87,8 +93,13 @@ home/             mirrors ~: each file is linked to the same path in your home
     ├── git/coolnight.gitconfig        delta and git defaults (included from ~/.gitconfig)
     ├── lazygit/config.yml
     ├── btop/btop.conf, themes/coolnight.theme
-    └── yazi/yazi.toml
+    ├── yazi/yazi.toml
+    ├── omniwm/settings.toml           window manager (a synced copy) + README.md
+    └── macos-tweaks-apply.sh, -undo.sh  optional macOS defaults (never run for you)
+copied-files.txt  which files sync as copies instead of links
 ```
+
+**Not synced, on purpose:** GitHub logins (`gh`), OmniWM's IPC secret, caches, and app leftovers like FlashSpace's old settings.
 
 ## Colors
 
@@ -100,7 +111,8 @@ home/             mirrors ~: each file is linked to the same path in your home
 
 ## Heads-up
 
-- Ghostty asks for Accessibility once, for the <kbd>cmd</kbd>+<kbd>`</kbd> drop-down terminal.
+- Ghostty asks for Accessibility once, for the <kbd>cmd</kbd>+<kbd>`</kbd> drop-down terminal. OmniWM needs Accessibility too; then turn on **Start at Login** in its Settings → General (macOS keeps that setting, so it can't sync).
+- `~/.config/macos-tweaks-apply.sh` (key repeat, Finder, Dock, screenshots…) comes along but never runs on its own; run it if you want it, and `macos-tweaks-undo.sh` puts macOS back to stock.
 - To get notified when long commands finish, allow notifications in System Settings → Notifications → Ghostty.
 - The keys avoid <kbd>alt</kbd>+letter combos, which tiling window managers such as OmniWM take; that's why the fuzzy `cd` is on <kbd>ctrl</kbd>+<kbd>g</kbd>.
 - Run `bash tests/run.sh` after changing `install.sh`.

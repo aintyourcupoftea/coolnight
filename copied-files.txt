@@ -1,0 +1,5 @@
+# Files synced as copies instead of symlinks: apps that rewrite their own
+# config (and watch it for changes) can replace a link with a plain file, so
+# coolnight copies these in on push and writes them in place on pull.
+# One path per line, relative to your home folder.
+.config/omniwm/settings.toml

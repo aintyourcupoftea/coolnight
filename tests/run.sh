@@ -10,6 +10,9 @@ T=$(mktemp -d "${TMPDIR%/}/coolnight-test.XXXXXX")
 A=$T/macA B=$T/macB
 pass=0 fail=0
 check() { if eval "$2"; then echo "PASS  $1"; pass=$((pass + 1)); else echo "FAIL  $1"; fail=$((fail + 1)); fi; }
+sha() { shasum -a 256 "$1" | cut -d' ' -f1; }
+inode() { stat -f %i "$1"; }
+OMNI=.config/omniwm/settings.toml
 run() { local home=$1; shift; (cd "$home" && HOME=$home COOLNIGHT_NO_SPLASH=1 bash "$home/.config/coolnight/install.sh" "$@" 2>&1); }
 bootstrap() { cat "$ROOT/install.sh" | HOME=$1 bash -s -- --configs-only --no-open 2>&1; }
 mkdir -p "$T/bin" "$A/Library/Fonts" "$B/Library/Fonts"
@@ -43,14 +46,20 @@ printf 'export WORK=1\nalias k=kubectl\n' >"$B/.zshrc"
 printf '[user]\n\tname = B Person\n\temail = b@example.com\n' >"$B/.gitconfig"
 mkdir -p "$B/Library/Application Support/com.mitchellh.ghostty"
 printf 'font-size = 12\n' >"$B/Library/Application Support/com.mitchellh.ghostty/config"
+# …and OmniWM already ran there once, writing its own default settings
+mkdir -p "$B/.config/omniwm" && printf 'schemaVersion = 4\n# generated default\n' >"$B/$OMNI"
 
 echo "── bootstrap, piped like curl | bash"
 bootstrap "$A" >"$T/a-install.out"
 bootstrap "$B" >"$T/b-install.out"
 check "A cloned the repo"                     "[[ -d $A/.config/coolnight/.git ]]"
-for f in $(cd "$ROOT/home" && find . -type f ! -name .DS_Store | sed 's|^\./||'); do
+for f in $(cd "$ROOT/home" && find . -type f ! -name .DS_Store | sed 's|^\./||' | grep -v -x -F "$OMNI"); do
   check "A ~/$f is a link with the repo's bytes" "[[ -L $A/$f ]] && cmp -s $A/$f $ROOT/home/$f"
 done
+check "A OmniWM settings are a real file, not a link" "[[ -f $A/$OMNI && ! -L $A/$OMNI ]] && cmp -s $A/$OMNI $ROOT/home/$OMNI"
+check "A remembers the synced version"         "grep -q \"\$(sha $A/$OMNI)  $OMNI\" $A/.local/state/coolnight/copies.base"
+check "B's OmniWM default replaced by the repo's" "cmp -s $B/$OMNI $ROOT/home/$OMNI"
+check "B's OmniWM default kept in the backup"  "grep -q 'generated default' $B/.local/state/coolnight/*/backup/$OMNI"
 check "A got a ~/.gitconfig that includes the coolnight defaults" "grep -q 'coolnight.gitconfig' $A/.gitconfig"
 check "A's git now pages through delta"       "HOME=$A git config core.pager | grep -q delta"
 check "B old zshrc kept in .zshrc.local"      "grep -q '^# alias k=kubectl' $B/.zshrc.local"
@@ -110,6 +119,58 @@ sed -i '' '$d' "$A/.config/coolnight/home/.config/ghostty/config"
 run "$A" status >"$T/a-status2.out"
 check "A is back in sync"                     "grep -q 'in sync with GitHub' $T/a-status2.out"
 
+echo "── synced copies (OmniWM's settings)"
+# OmniWM saves by writing a new file and renaming it over the old one
+omniwm_save() { sed "$2" "$1/$OMNI" >"$1/$OMNI.tmp" && mv -f "$1/$OMNI.tmp" "$1/$OMNI"; }
+omniwm_save "$A" 's/^animationSpeed = .*/animationSpeed = 2.0/'
+run "$A" status >"$T/a-copy-status.out"
+check "A status sees OmniWM's own save"        "grep -q 'omniwm/settings.toml' $T/a-copy-status.out"
+run "$A" push >"$T/a-copy-push1.out"
+check "A push sends it"                        "grep -q 'push to GitHub' $T/a-copy-push1.out"
+b_inode=$(inode "$B/$OMNI")
+run "$B" pull >"$T/b-copy-pull1.out"
+check "B pull applies it"                      "grep -q '^animationSpeed = 2.0' $B/$OMNI"
+check "B's file was written in place (OmniWM's watcher sees a save)" "[[ \$(inode $B/$OMNI) == $b_inode ]]"
+check "B status is clean afterwards"           "run $B status | grep -q 'in sync with GitHub'"
+omniwm_save "$A" 's/^size = 12.0/size = 14.0/'
+omniwm_save "$B" 's/^hideEmptyWorkspaces = true/hideEmptyWorkspaces = false/'
+run "$A" push >"$T/a-copy-push2.out"
+run "$B" push >"$T/b-copy-push2.out"
+check "B push merges both Macs' OmniWM edits"  "grep -q '^size = 14.0' $B/$OMNI && grep -q '^hideEmptyWorkspaces = false' $B/$OMNI"
+run "$A" pull >"$T/a-copy-pull2.out"
+check "A pull gets B's edit too"               "grep -q '^hideEmptyWorkspaces = false' $A/$OMNI && grep -q '^size = 14.0' $A/$OMNI"
+omniwm_save "$A" 's/^animationSpeed = .*/animationSpeed = 2.5/'
+omniwm_save "$B" 's/^animationSpeed = .*/animationSpeed = 3.0/'
+run "$A" push >"$T/a-copy-push3.out"
+run "$B" push >"$T/b-copy-push3.out"
+check "the same OmniWM line on both: push stops" "grep -q 'both Macs changed the same lines' $T/b-copy-push3.out"
+check "B keeps its own OmniWM setting, clean"  "grep -q '^animationSpeed = 3.0' $B/$OMNI && ! grep -q '^<<<<<<<' $B/$OMNI"
+git -C "$B/.config/coolnight" reset --quiet --hard '@{u}'
+run "$B" --configs-only --no-open >"$T/b-copy-take.out"
+check "taking the repo's version applies it, B's edit backed up" "grep -q '^animationSpeed = 2.5' $B/$OMNI && grep -q '^animationSpeed = 3.0' $B/.local/state/coolnight/*/backup/$OMNI"
+# both sides change while the repo is updated behind coolnight's back
+omniwm_save "$B" 's/^animationSpeed = .*/animationSpeed = 9.0/'
+omniwm_save "$A" 's/^size = 14.0/size = 16.0/'
+run "$A" push >/dev/null
+git -C "$B/.config/coolnight" pull --quiet --ff-only
+run "$B" status >"$T/b-copy-status2.out"
+check "both changed: status says merge by hand" "grep -q 'changed here and in the repo' $T/b-copy-status2.out"
+run "$B" push >"$T/b-copy-push5.out"
+check "push doesn't undo A's change"            "grep -q '^size = 16.0' $B/.config/coolnight/home/$OMNI && [[ -z \$(git -C $B/.config/coolnight status --porcelain) ]]"
+check "B's own edit is still there"             "grep -q '^animationSpeed = 9.0' $B/$OMNI"
+cp "$B/.config/coolnight/home/$OMNI" "$B/$OMNI"
+run "$B" --configs-only --no-open >/dev/null
+omniwm_save "$B" 's/^animationSpeed = .*/animationSpeed = 4.0/'
+run "$B" pull >"$T/b-copy-pull3.out"
+check "pull won't overwrite an unpushed OmniWM edit" "grep -q 'run coolnight push' $T/b-copy-pull3.out && grep -q '^animationSpeed = 4.0' $B/$OMNI"
+omniwm_save "$B" 's/^\[gaps\]$/[gaps/'
+run "$B" push >"$T/b-copy-push4.out"
+check "push refuses a broken OmniWM file"      "grep -q 'configs are broken' $T/b-copy-push4.out && grep -q 'omniwm/settings.toml' $T/b-copy-push4.out"
+git -C "$B/.config/coolnight" checkout --quiet -- "home/$OMNI" && cp "$B/.config/coolnight/home/$OMNI" "$B/$OMNI"
+run "$B" --configs-only --no-open >/dev/null
+check "B back in sync"                         "run $B status | grep -q 'in sync with GitHub'"
+run "$A" pull >/dev/null
+
 echo "── adding files"
 printf 'set number\n' >"$A/.vimrc"
 run "$A" add .vimrc >"$T/a-add.out"
@@ -152,6 +213,7 @@ echo "── doctor, restore, version"
 run "$A" doctor >"$T/a-doctor.out"
 check "doctor sees every config linked"       "grep -q 'configs linked from' $T/a-doctor.out"
 check "doctor finds the configs valid"        "grep -q 'configs valid' $T/a-doctor.out"
+check "doctor checks the synced copy"          "grep -q 'settings.toml matches the repo (synced copy)' $T/a-doctor.out"
 check "doctor sees git using coolnight"       "grep -q 'git uses the coolnight defaults' $T/a-doctor.out"
 check "doctor: zsh starts with no errors"     "grep -q 'zsh starts in .* ms with no errors' $T/a-doctor.out"
 check "doctor: in sync with GitHub"           "grep -q 'in sync with GitHub' $T/a-doctor.out"

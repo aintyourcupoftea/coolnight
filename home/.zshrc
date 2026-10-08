@@ -133,6 +133,16 @@ setopt HIST_IGNORE_SPACE HIST_REDUCE_BLANKS HIST_VERIFY   # leading space = don'
 # ─── Completion ────────────────────────────────────────────────────────
 fpath=({$ZEROBREW_PREFIX,/opt/homebrew,/usr/local}/share/{zsh-completions,zsh/site-functions}(N-/) $fpath)
 mkdir -p ~/.cache/zsh
+# tools that print their own completions (omniwmctl, zb): cached, and only
+# regenerated when the tool itself gets updated, so startup stays fast
+_comp=~/.cache/zsh/completions
+fpath=($_comp $fpath)
+for _plugin in omniwmctl zb; do
+  (( $+commands[$_plugin] )) || continue
+  if [[ ! -s $_comp/_$_plugin || $commands[$_plugin] -nt $_comp/_$_plugin ]]; then
+    mkdir -p $_comp && $_plugin completion zsh >| $_comp/_$_plugin 2>/dev/null && rm -f ~/.cache/zsh/zcompdump
+  fi
+done
 autoload -Uz compinit
 # full security check once a day, cached load otherwise (fast startup)
 if [[ -n ~/.cache/zsh/zcompdump(#qN.mh+24) || ! -e ~/.cache/zsh/zcompdump ]]; then
@@ -416,6 +426,9 @@ keys() {
   print -P "%F{#3B6E8F} ghostty%f"
   print -P "  %F{#0FC5ED}cmd+b%f then %F{#0FC5ED}h j k l%f move · %F{#0FC5ED}H J K L%f resize · %F{#0FC5ED}\\\\%f %F{#0FC5ED}-%f split · %F{#0FC5ED}z%f zoom · %F{#0FC5ED}=%f even · %F{#0FC5ED}x%f close"
   print -P "  %F{#0FC5ED}cmd+↑ ↓%f  jump between prompts   %F{#0FC5ED}cmd+\`%f  drop-down terminal   %F{#0FC5ED}cmd+shift+p%f  command palette"
+  print -P "%F{#3B6E8F} omniwm%f %F{#3B6E8F}(full list: ~/.config/omniwm/README.md)%f"
+  print -P "  %F{#0FC5ED}alt+h j k l%f focus · %F{#0FC5ED}alt+shift+h j k l%f move · %F{#0FC5ED}alt+1-9 b c e m n p t v w z%f workspaces (%F{#0FC5ED}+shift%f sends)"
+  print -P "  %F{#0FC5ED}alt+shift+o%f overview · %F{#0FC5ED}alt+shift+;%f palette · %F{#0FC5ED}alt+/%f niri ↔ dwindle · %F{#0FC5ED}alt+r%f width · %F{#0FC5ED}alt+f%f full"
   print -P "%F{#3B6E8F} system%f"
   print -P "  %F{#A277FF}btop%f  activity monitor · %F{#A277FF}ff%f  system splash · %F{#A277FF}coolnight doctor%f · %F{#A277FF}push%f · %F{#A277FF}pull%f · %F{#A277FF}update%f"
 }
@@ -472,4 +485,4 @@ if [[ -o interactive && $_agent_shell != 1 && $TERM_PROGRAM == ghostty && -z $CO
   fi
   unset _splash
 fi
-unset _agent_shell _pkg _plugin _init
+unset _agent_shell _pkg _plugin _init _comp
