@@ -1,0 +1,57 @@
+# btop · coolnight theme (deep ocean, neon accents)
+# Backgrounds stay transparent (theme_background = false in btop.conf),
+# so Ghostty's translucent background and image show through.
+
+theme[main_bg]="#011423"
+theme[main_fg]="#CBE0F0"
+theme[title]="#E8F4FF"
+theme[hi_fg]="#0FC5ED"
+theme[selected_bg]="#033259"
+theme[selected_fg]="#E8F4FF"
+theme[inactive_fg]="#3B6E8F"
+theme[graph_text]="#5BD8F5"
+theme[meter_bg]="#214969"
+theme[proc_misc]="#24EAF7"
+
+# box outlines and dividers
+theme[cpu_box]="#214969"
+theme[mem_box]="#214969"
+theme[net_box]="#214969"
+theme[proc_box]="#214969"
+theme[div_line]="#214969"
+
+# heat: neon when calm, gold when busy, coral when maxed
+theme[temp_start]="#47FF9C"
+theme[temp_mid]="#FFE073"
+theme[temp_end]="#E52E2E"
+theme[cpu_start]="#47FF9C"
+theme[cpu_mid]="#FFE073"
+theme[cpu_end]="#E52E2E"
+theme[used_start]="#47FF9C"
+theme[used_mid]="#FFE073"
+theme[used_end]="#E52E2E"
+theme[proc_start]="#47FF9C"
+theme[proc_mid]="#FFE073"
+theme[proc_end]="#E52E2E"
+theme[process_start]="#47FF9C"
+theme[process_mid]="#FFE073"
+theme[process_end]="#E52E2E"
+
+# memory you still have: cool blues and greens
+theme[free_start]="#033259"
+theme[free_mid]="#0FC5ED"
+theme[free_end]="#44FFB1"
+theme[cached_start]="#033259"
+theme[cached_mid]="#5BD8F5"
+theme[cached_end]="#24EAF7"
+theme[available_start]="#033259"
+theme[available_mid]="#0FC5ED"
+theme[available_end]="#47FF9C"
+
+# network: aqua down, violet up
+theme[download_start]="#033259"
+theme[download_mid]="#0FC5ED"
+theme[download_end]="#24EAF7"
+theme[upload_start]="#2A1F4D"
+theme[upload_mid]="#A277FF"
+theme[upload_end]="#BE9EFF"

@@ -1,25 +1,28 @@
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  starship · coolnight neon                                           ║
-# ║  ╭─  apple ▸ path ▸ git ▸ toolchain ······················ ⏱ time   ║
-# ║  ╰─❯                                                                 ║
+# ║  starship · coolnight neon · v2                                      ║
+# ║  ╭─  apple ▸ path ▸ git +- ▸ toolchain ········ ✘ ⏱ jobs  ⚡ time  ║
+# ║  ╰─❯           (past prompts collapse to "17:42 ❯", see ~/.zshrc)   ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 "$schema" = "https://starship.rs/config-schema.json"
 add_newline = true
 command_timeout = 800
+scan_timeout = 50
+palette = "coolnight"
 
 format = """
-[╭─](#214969)\
-[](#47FF9C)\
+[╭─](slate)\
+[](neon)\
 $os\
 $username\
 $hostname\
-[](fg:#47FF9C bg:#0FC5ED)\
+[](fg:neon bg:aqua)\
 $directory\
-[](fg:#0FC5ED bg:#214969)\
+[](fg:aqua bg:slate)\
 $git_branch\
 $git_state\
 $git_status\
-[](fg:#214969 bg:#033259)\
+$git_metrics\
+[](fg:slate bg:deep)\
 $nodejs\
 $python\
 $rust\
@@ -27,123 +30,191 @@ $golang\
 $java\
 $bun\
 $docker_context\
-[](fg:#033259)\
+[](fg:deep)\
 $fill\
+$status\
 $cmd_duration\
 $jobs\
+$sudo\
+$memory_usage\
+$battery\
 $time
-[╰─](#214969)$character"""
+[╰─](slate)$character"""
+
+# multi-line commands (a quote left open, a trailing \) continue under this
+continuation_prompt = "[  ┆ ](dim)"
+
+# one place for the colors; the hex values match Ghostty's coolnight palette
+[palettes.coolnight]
+ink = "#011423"
+deep = "#033259"
+slate = "#214969"
+dim = "#3B6E8F"
+fog = "#CBE0F0"
+neon = "#47FF9C"
+mint = "#44FFB1"
+aqua = "#0FC5ED"
+teal = "#24EAF7"
+gold = "#FFE073"
+sand = "#FFEBA1"
+coral = "#E52E2E"
+rose = "#FF5C5C"
+violet = "#A277FF"
 
 [fill]
 symbol = " "
 
 [os]
 disabled = false
-style = "bg:#47FF9C fg:#011423"
+style = "bg:neon fg:ink"
 format = "[$symbol]($style)"
 [os.symbols]
-Macos = " "
+Macos = " "
 
 [username]
 show_always = false
-style_user = "bg:#47FF9C fg:#011423 bold"
-style_root = "bg:#47FF9C fg:#E52E2E bold"
+style_user = "bg:neon fg:ink bold"
+style_root = "bg:neon fg:coral bold"
 format = "[$user ]($style)"
 
 [hostname]
 ssh_only = true
-style = "bg:#47FF9C fg:#011423"
+style = "bg:neon fg:ink"
 format = "[@$hostname ]($style)"
 
 [directory]
-style = "bg:#0FC5ED fg:#011423 bold"
+style = "bg:aqua fg:ink"
 format = "[ $path ]($style)[$read_only]($read_only_style)"
+# inside a git repo: the repo's own name is bold, the path above it dimmed
+before_repo_root_style = "bg:aqua fg:deep"
+repo_root_style = "bg:aqua fg:ink bold"
+repo_root_format = "[ $before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path ]($style)[$read_only]($read_only_style)"
 truncation_length = 4
 truncation_symbol = "…/"
 truncate_to_repo = true
-read_only = " "
-read_only_style = "bg:#0FC5ED fg:#E52E2E"
+read_only = " "
+read_only_style = "bg:aqua fg:coral"
 [directory.substitutions]
-"Documents" = " Documents"
-"Downloads" = " Downloads"
-"Desktop" = " Desktop"
-".config" = " .config"
+"Documents" = " Documents"
+"Downloads" = " Downloads"
+"Desktop" = " Desktop"
+".config" = " .config"
 
 [git_branch]
-symbol = ""
-style = "bg:#214969 fg:#47FF9C"
+symbol = ""
+style = "bg:slate fg:neon"
 format = "[ $symbol $branch ]($style)"
 
 [git_state]
-style = "bg:#214969 fg:#FFE073 bold"
+style = "bg:slate fg:gold bold"
 format = "[\\($state( $progress_current/$progress_total)\\) ]($style)"
 
 [git_status]
-style = "bg:#214969 fg:#FFE073"
+style = "bg:slate fg:gold"
 format = "[($all_status$ahead_behind )]($style)"
-conflicted = "$count "
+conflicted = "$count "
 ahead = "⇡$count "
 behind = "⇣$count "
 diverged = "⇕⇡$ahead_count⇣$behind_count "
 untracked = "?$count "
-stashed = " "
+stashed = " "
 modified = "!$count "
 staged = "+$count "
 renamed = "»$count "
 deleted = "✘$count "
 
+# lines added / removed since the last commit
+[git_metrics]
+disabled = false
+added_style = "bg:slate fg:mint"
+deleted_style = "bg:slate fg:rose"
+format = "([+$added ]($added_style))([-$deleted ]($deleted_style))"
+
 [nodejs]
-symbol = ""
-style = "bg:#033259 fg:#44FFB1"
+symbol = ""
+style = "bg:deep fg:mint"
 format = "[ $symbol ($version) ]($style)"
 
 [python]
-symbol = ""
-style = "bg:#033259 fg:#FFE073"
+symbol = ""
+style = "bg:deep fg:gold"
 format = "[ $symbol ($version)( \\($virtualenv\\)) ]($style)"
 
 [rust]
-symbol = ""
-style = "bg:#033259 fg:#FF5C5C"
+symbol = ""
+style = "bg:deep fg:rose"
 format = "[ $symbol ($version) ]($style)"
 
 [golang]
-symbol = ""
-style = "bg:#033259 fg:#24EAF7"
+symbol = ""
+style = "bg:deep fg:teal"
 format = "[ $symbol ($version) ]($style)"
 
 [java]
-symbol = ""
-style = "bg:#033259 fg:#FF5C5C"
+symbol = ""
+style = "bg:deep fg:rose"
 format = "[ $symbol ($version) ]($style)"
 
 [bun]
-symbol = ""
-style = "bg:#033259 fg:#FFEBA1"
+symbol = ""
+style = "bg:deep fg:sand"
 format = "[ $symbol ($version) ]($style)"
 
 [docker_context]
-symbol = ""
-style = "bg:#033259 fg:#0FC5ED"
+symbol = ""
+style = "bg:deep fg:aqua"
 format = "[ $symbol $context ]($style)"
+
+# ── right side ──────────────────────────────────────────────────────────
+# the last command's exit code, or the signal that stopped it (ctrl-c → INT)
+[status]
+disabled = false
+style = "bold coral"
+format = "[✘ $status( $signal_name) ]($style)"
+recognize_signal_code = true
 
 [cmd_duration]
 min_time = 2000
-style = "fg:#FFE073"
-format = "[ $duration ]($style)"
+style = "fg:gold"
+format = "[ $duration ]($style)"
 
 [jobs]
-symbol = ""
-style = "fg:#A277FF"
+symbol = ""
+style = "fg:violet"
 format = "[$symbol $number ]($style)"
+
+# sudo is still unlocked (no password needed for a few minutes)
+[sudo]
+disabled = false
+symbol = "󰌾 "
+style = "bold gold"
+format = "[$symbol]($style)"
+
+# only when memory gets tight
+[memory_usage]
+disabled = false
+threshold = 85
+symbol = "󰍛 "
+style = "bold rose"
+format = "[$symbol$ram_pct ]($style)"
+
+# only when the battery is low and unplugged
+[battery]
+full_symbol = "󰁹 "
+charging_symbol = "󰂄 "
+discharging_symbol = "󰂃 "
+format = "[$symbol$percentage ]($style)"
+[[battery.display]]
+threshold = 20
+style = "bold coral"
 
 [time]
 disabled = false
 time_format = "%H:%M"
-style = "fg:#3B6E8F"
-format = "[ $time]($style)"
+style = "fg:dim"
+format = "[ $time]($style)"
 
 [character]
-success_symbol = "[❯](bold #47FF9C)"
-error_symbol = "[❯](bold #E52E2E)"
-vimcmd_symbol = "[❮](bold #A277FF)"
+success_symbol = "[❯](bold neon)"
+error_symbol = "[❯](bold coral)"
+vimcmd_symbol = "[❮](bold violet)"

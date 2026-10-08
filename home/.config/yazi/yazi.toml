@@ -1,0 +1,9 @@
+# yazi · coolnight (run `y`; quitting leaves your shell in the folder you were in)
+# Colors come from yazi's built-in theme, which uses the terminal's palette,
+# so it is already coolnight. Images preview natively in Ghostty.
+[mgr]
+show_hidden = true
+sort_by = "natural"
+sort_dir_first = true
+linemode = "size"
+scrolloff = 8

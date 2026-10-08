@@ -1,31 +1,46 @@
-// fastfetch · coolnight — shown once a day by ~/.zshrc (run `ff` anytime)
+// fastfetch · coolnight v2 · shown once a day by ~/.zshrc (run `ff` anytime)
+// colors: frame #214969 · system #24EAF7 · hardware #A277FF · bars green → gold → red
 {
   "$schema": "https://github.com/fastfetch-cli/fastfetch/raw/dev/doc/json_schema.json",
   "logo": {
     "type": "builtin",
     "source": "macOS_small",
     "color": { "1": "green", "2": "cyan", "3": "blue", "4": "magenta", "5": "red", "6": "yellow" },
-    "padding": { "top": 1, "left": 2, "right": 3 }
+    "padding": { "top": 2, "left": 2, "right": 3 }
   },
   "display": {
-    "separator": "  ",
+    "separator": " ",
     "color": { "keys": "cyan", "title": "green" },
-    "key": { "width": 10 }
+    "key": { "width": 11 },
+    "percent": {
+      "type": 11,
+      "color": { "green": "38;2;71;255;156", "yellow": "38;2;255;224;115", "red": "38;2;229;46;46" }
+    },
+    "bar": {
+      "width": 12,
+      "char": { "elapsed": "━", "total": "━" },
+      "border": { "left": "", "right": " " },
+      "color": { "total": "38;2;33;73;105" }
+    }
   },
   "modules": [
     "break",
     { "type": "title", "format": "{user-name-colored}{at-symbol-colored}{host-name-colored}" },
-    { "type": "custom", "format": "\u001b[34m────────────────────────────\u001b[0m" },
-    { "type": "os",       "key": " os" },
-    { "type": "host",     "key": " host" },
-    { "type": "uptime",   "key": " up" },
-    { "type": "packages", "key": " pkgs" },
-    { "type": "shell",    "key": " shell" },
-    { "type": "terminal", "key": " term" },
-    { "type": "cpu",      "key": " cpu" },
-    { "type": "memory",   "key": " mem" },
-    { "type": "disk",     "key": " disk", "folders": "/" },
-    "break",
+    { "type": "custom", "format": "{#38;2;33;73;105}╭─ {#38;2;36;234;247}system {#38;2;33;73;105}─────────────────────────────" },
+    { "type": "os",           "key": "{#38;2;33;73;105}│ {#38;2;36;234;247} os" },
+    { "type": "host",         "key": "{#38;2;33;73;105}│ {#38;2;36;234;247}󰌢 host" },
+    { "type": "uptime",       "key": "{#38;2;33;73;105}│ {#38;2;36;234;247}󰅐 up" },
+    { "type": "packages",     "key": "{#38;2;33;73;105}│ {#38;2;36;234;247}󰏖 pkgs" },
+    { "type": "shell",        "key": "{#38;2;33;73;105}│ {#38;2;36;234;247} shell" },
+    { "type": "terminal",     "key": "{#38;2;33;73;105}│ {#38;2;36;234;247} term" },
+    { "type": "terminalfont", "key": "{#38;2;33;73;105}│ {#38;2;36;234;247} font" },
+    { "type": "custom", "format": "{#38;2;33;73;105}├─ {#38;2;162;119;255}hardware {#38;2;33;73;105}───────────────────────────" },
+    { "type": "cpu",          "key": "{#38;2;33;73;105}│ {#38;2;162;119;255} cpu" },
+    { "type": "gpu",          "key": "{#38;2;33;73;105}│ {#38;2;162;119;255}󰢮 gpu" },
+    { "type": "memory",       "key": "{#38;2;33;73;105}│ {#38;2;162;119;255}󰍛 mem" },
+    { "type": "disk",         "key": "{#38;2;33;73;105}│ {#38;2;162;119;255}󰋊 disk", "folders": "/" },
+    { "type": "battery",      "key": "{#38;2;33;73;105}│ {#38;2;162;119;255}󰁹 power" },
+    { "type": "custom", "format": "{#38;2;33;73;105}╰──────────────────────────────────────────" },
     { "type": "colors", "symbol": "circle", "paddingLeft": 2 }
   ]
 }

@@ -1,0 +1,68 @@
+# git · coolnight
+# Pulled in by ~/.gitconfig through [include], so this file stays shared and
+# public while your name, email and anything private live in ~/.gitconfig.
+# `git config --global …` writes there too, never here.
+
+# ─── delta: syntax-highlighted diffs in coolnight colors ────────────────
+# falls back to plain less when delta isn't installed, so git never breaks
+[core]
+	pager = "if command -v delta >/dev/null 2>&1; then exec delta; else exec less -FRX; fi"
+[interactive]
+	diffFilter = "if command -v delta >/dev/null 2>&1; then exec delta --color-only; else exec cat; fi"
+[delta]
+	navigate = true                       # n / N jump between files
+	line-numbers = true
+	hyperlinks = true                     # cmd+click a file name in Ghostty to open it
+	syntax-theme = ansi                   # code colors come from Ghostty's palette
+	file-style = bold "#0FC5ED"
+	file-decoration-style = "#214969" ul
+	hunk-header-style = file line-number syntax
+	hunk-header-decoration-style = "#214969" box
+	hunk-header-file-style = "#A277FF"
+	hunk-header-line-number-style = "#FFE073"
+	line-numbers-minus-style = "#E52E2E"
+	line-numbers-plus-style = "#47FF9C"
+	line-numbers-zero-style = "#3B6E8F"
+	line-numbers-left-style = "#214969"
+	line-numbers-right-style = "#214969"
+	minus-style = syntax "#3A0B16"
+	minus-emph-style = syntax "#6B1426"
+	plus-style = syntax "#06301F"
+	plus-emph-style = syntax "#0B5A36"
+	whitespace-error-style = "#FFE073" reverse
+	blame-palette = "#011423 #03203a #033259"
+	merge-conflict-begin-symbol = ▼
+	merge-conflict-end-symbol = ▲
+	merge-conflict-ours-diff-header-style = "#FFE073" bold
+	merge-conflict-theirs-diff-header-style = "#A277FF" bold
+
+# ─── defaults that make git less surprising ─────────────────────────────
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true                         # no "divergent branches" questions
+[rebase]
+	autoStash = true
+	updateRefs = true
+[push]
+	autoSetupRemote = true                # first push of a new branch just works
+	default = current
+[fetch]
+	prune = true
+[diff]
+	algorithm = histogram
+	colorMoved = default
+[merge]
+	conflictStyle = zdiff3
+[rerere]
+	enabled = true                        # remembers how you resolved a conflict
+[branch]
+	sort = -committerdate
+[tag]
+	sort = version:refname
+[column]
+	ui = auto
+[help]
+	autocorrect = prompt
+[commit]
+	verbose = true

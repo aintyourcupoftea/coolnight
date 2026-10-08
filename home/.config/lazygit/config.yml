@@ -1,0 +1,27 @@
+# lazygit · coolnight (run `lg`; ~/.zshrc points LG_CONFIG_FILE here)
+gui:
+  nerdFontsVersion: "3"
+  border: rounded
+  showRandomTip: false
+  showBottomLine: true
+  theme:
+    activeBorderColor: ["#47FF9C", bold]
+    inactiveBorderColor: ["#214969"]
+    searchingActiveBorderColor: ["#0FC5ED", bold]
+    optionsTextColor: ["#0FC5ED"]
+    selectedLineBgColor: ["#033259"]
+    inactiveViewSelectedLineBgColor: ["#021f38"]
+    cherryPickedCommitFgColor: ["#011423"]
+    cherryPickedCommitBgColor: ["#A277FF"]
+    markedBaseCommitFgColor: ["#011423"]
+    markedBaseCommitBgColor: ["#FFE073"]
+    unstagedChangesColor: ["#E52E2E"]
+    defaultFgColor: ["#CBE0F0"]
+git:
+  # diffs go through delta, in coolnight colors (falls back to git's own)
+  diffRenderers:
+    - type: stdinFilter
+      command: delta --paging=never --line-numbers
+os:
+  # `e` opens files in the same editor as the shell
+  editPreset: vim
