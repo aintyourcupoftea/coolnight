@@ -166,5 +166,10 @@ run "$A" --version >"$T/a-version.out"
 check "--version names the commit"            "grep -q '^coolnight [0-9a-f]\{7\}' $T/a-version.out"
 
 echo
-echo "passed $pass, failed $fail   (outputs in $T)"
+if ((fail == 0)); then
+  rm -rf "$T"
+  echo "passed $pass, failed $fail"
+else
+  echo "passed $pass, failed $fail   (outputs kept in $T)"
+fi
 ((fail == 0))
