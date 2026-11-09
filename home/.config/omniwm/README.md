@@ -1,6 +1,7 @@
 # OmniWM setup (ported from AeroSpace)
 
-`settings.toml` is a port of `~/Downloads/aerospace.toml` for **OmniWM 0.7.5**,
+`settings.toml` is a port of `~/Downloads/aerospace.toml`, first written for
+OmniWM 0.7.5 and now on **OmniWM 0.8.0 (settings `schemaVersion = 5`)**,
 checked against OmniWM's own schema code. This file is the durable reference:
 OmniWM strips comments from `settings.toml` whenever it rewrites it.
 
@@ -150,6 +151,14 @@ Ghostty config. To switch over:
   hotkey id rejects the whole file. OmniWM then keeps the last good config and
   lists the problem under Diagnostics in its menu-bar icon.
 - `settings.toml.omniwm-default.bak` is the untouched file OmniWM generated.
+- **Schema upgrades.** OmniWM 0.8.0 moved the file from `schemaVersion` 4 to 5.
+  It added the new sections with their defaults and renamed the resize hotkeys
+  (`setContainerPrimarySpan.decrease10Percent` → `resizeContainerPrimarySpan.shrink`,
+  `increase10Percent` → `grow`, and the same for the window spans). The keys
+  themselves didn't change. OmniWM keeps the original as `settings.toml.pre-v5`,
+  and the Troubleshooting warning stays until that file is gone.
+- **Upgrade OmniWM on every Mac before pulling** (`brew upgrade --cask omniwm`).
+  An older OmniWM can't read a newer `schemaVersion` and rejects the whole file.
 - To see what OmniWM loaded: `omniwmctl query workspaces`, `omniwmctl query rules`,
   `omniwmctl query displays`.
 - `../macos-tweaks-apply.sh` now keeps *separate Spaces* ON. Re-running the old

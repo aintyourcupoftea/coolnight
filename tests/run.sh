@@ -47,7 +47,7 @@ printf '[user]\n\tname = B Person\n\temail = b@example.com\n' >"$B/.gitconfig"
 mkdir -p "$B/Library/Application Support/com.mitchellh.ghostty"
 printf 'font-size = 12\n' >"$B/Library/Application Support/com.mitchellh.ghostty/config"
 # …and OmniWM already ran there once, writing its own default settings
-mkdir -p "$B/.config/omniwm" && printf 'schemaVersion = 4\n# generated default\n' >"$B/$OMNI"
+mkdir -p "$B/.config/omniwm" && printf 'schemaVersion = 5\n# generated default\n' >"$B/$OMNI"
 
 echo "── bootstrap, piped like curl | bash"
 bootstrap "$A" >"$T/a-install.out"
