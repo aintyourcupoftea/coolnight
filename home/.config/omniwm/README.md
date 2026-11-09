@@ -42,7 +42,7 @@ The modifier scheme is the same as before: **alt** goes somewhere, **alt-shift**
 | `alt-,` | Show the column's windows as tabs | `accordion` |
 | `alt-f` | Fullscreen (gaps kept) | `fullscreen` |
 | `alt-shift-f` | Toggle floating / tiled | `layout floating tiling` |
-| `alt-r` | Cycle the column width: ⅓ → ½ → ⅔ | resize mode |
+| `alt-r` | **Resize mode** (see below). Inside it, `w` cycles the column width ⅓ → ½ → ⅔ | resize mode |
 | `ctrl-alt-h` / `l` | Make the column narrower / wider | resize mode `h` / `l` |
 | `ctrl-alt-j` / `k` | Make the window taller / shorter within its column | resize mode `j` / `k` |
 | `ctrl-alt-r` | Reset the window's height | — |
@@ -63,6 +63,7 @@ The modifier scheme is the same as before: **alt** goes somewhere, **alt-shift**
 | `alt-s` / `alt-shift-s` | Show/hide scratchpad 1 / put the window in it (again: take it back out) |
 | ``alt-shift-` `` | OmniWM's drop-down terminal. It uses your Ghostty config. |
 | `alt-shift-r` | Bring all floating windows to the front |
+| `cmd-tab` | OmniWM's window switcher: this workspace's windows, in layout order (macOS's app switcher is replaced) |
 | `ctrl-cmd` + drag | Drop a tiled window onto another to swap them. Add `shift` to insert it instead (Niri). |
 | `ctrl-cmd` + right-drag | Resize a tiled window |
 | `alt-shift` + scroll wheel, or a 4-finger swipe | Scroll through columns |
@@ -82,9 +83,12 @@ These keys are deliberately left free:
   `--auto-back-and-forth`; use `alt-tab` to go back.
 - **App rules only route an app's first window, when it launches.** Later
   windows open on the workspace you're on. AeroSpace moved every new window.
-- **There are no modes.** Resizing moved to `ctrl-alt-hjkl` and service mode
-  to the command palette. You never need `reload-config`: saving the file
-  applies it.
+- **Resize mode is back (OmniWM 0.8).** `alt-r` enters it, and a green pill shows at
+  the bottom of the screen with every key listed. Then plain `h/l` make the column
+  narrower/wider, `w` cycles the width ⅓ → ½ → ⅔, `j/k` make the window taller/shorter, `b` balances, `r` resets
+  the height, `f` toggles full width, `e` expands, `c` centers. `Esc` leaves.
+  `ctrl-alt-hjkl` still works outside the mode. Service mode is the command
+  palette. You never need `reload-config`: saving the file applies it.
 - **No equivalent for** `flatten-workspace-tree`, `close-all-windows-but-current`,
   or wrap-around focus at the outermost screen edge.
 - **Each workspace has a home display.** All of them live on the main display,
@@ -131,6 +135,10 @@ window-classification data.
 | `gestures.mouseResizeModifierKey = "controlCommand"` | Same reasoning. It also keeps Finder's Option+right-click menu working. |
 | `general.animationSpeed = 1.5` | A bit snappier for someone used to instant AeroSpace. Set it to `1.0` for the default speed. To turn animations off, set `animationsEnabled = false`. |
 | `appearance.mode = "automatic"` | Follows your Mac's automatic light/dark switching. |
+| `focus.followsMouse = true` | The window under the pointer gets focus without a click. `followsMouseOnlyFullyVisible` keeps half-scrolled-off columns from grabbing it. |
+| `clipboard.historyEnabled = true` | Clipboard tab in the command palette (`⌘3`). macOS-marked secrets (AutoFill passwords, one-time codes, private browsing) are skipped. |
+| `windowSwitcher` | On for `cmd-tab`. `optionTab = "disabled"` keeps `alt-tab` as workspace back-and-forth. |
+| `outerGapTop = 41` (MacBook screen) | Its menu bar is 33pt, so 41 leaves the same 8pt gap as the other edges. |
 | Extra app rules | Edge, Dia and Firefox → B. Zed → C. Spotify → M. ZapFast → W. Commander One → E. `com.adobe.Photoshop` → Z, next to your `com.PS.PSD`. Passwords floats. |
 | Ghostty quick-terminal rule | Your global ``cmd-` `` Ghostty dropdown floats instead of being sent to T. |
 

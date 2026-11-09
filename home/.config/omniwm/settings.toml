@@ -15,7 +15,7 @@ green = 0.6784313725490196
 red = 0.5411764705882353
 
 [clipboard]
-historyEnabled = false
+historyEnabled = true
 ignoredTypes = []
 maxItemBytes = 8388608
 maxItems = 200
@@ -32,8 +32,8 @@ useGlobalGaps = true
 [focus]
 crossesMonitorAtEdge = true
 edgeNavigationInterval = 1.5
-followsMouse = false
-followsMouseOnlyFullyVisible = false
+followsMouse = true
+followsMouseOnlyFullyVisible = true
 followsWindowToMonitor = false
 lockModifier = "off"
 moveCrossesMonitorAtEdge = true
@@ -216,8 +216,8 @@ showMenuItems = true
 
 [windowSwitcher]
 commandTab = "activeWorkspace"
-enabled = false
-optionTab = "allWorkspaces"
+enabled = true
+optionTab = "disabled"
 order = "omniLayout"
 scope = "allWorkspaces"
 showFooter = true
@@ -897,6 +897,7 @@ id = "focusWindowOrWorkspaceUp"
 [[hotkeys]]
 binding = "Control+Option+C"
 id = "centerColumn"
+modeKey = "C"
 
 [[hotkeys]]
 binding = "Unassigned"
@@ -1231,8 +1232,9 @@ binding = "Unassigned"
 id = "moveColumnToIndex.9"
 
 [[hotkeys]]
-binding = "Option+R"
+binding = "Unassigned"
 id = "cycleSizeForward"
+modeKey = "W"
 
 [[hotkeys]]
 binding = "Unassigned"
@@ -1257,22 +1259,27 @@ id = "cycleWindowSecondarySpanBackward"
 [[hotkeys]]
 binding = "Control+Option+F"
 id = "toggleContainerFullPrimarySpan"
+modeKey = "F"
 
 [[hotkeys]]
 binding = "Control+Option+E"
 id = "expandContainerToAvailablePrimarySpan"
+modeKey = "E"
 
 [[hotkeys]]
 binding = "Control+Option+R"
 id = "resetWindowSecondarySpan"
+modeKey = "R"
 
 [[hotkeys]]
 binding = "Control+Option+H"
 id = "resizeContainerPrimarySpan.shrink"
+modeKey = "H"
 
 [[hotkeys]]
 binding = "Control+Option+L"
 id = "resizeContainerPrimarySpan.grow"
+modeKey = "L"
 
 [[hotkeys]]
 binding = "Unassigned"
@@ -1285,14 +1292,17 @@ id = "resizeWindowPrimarySpan.grow"
 [[hotkeys]]
 binding = "Control+Option+K"
 id = "resizeWindowSecondarySpan.shrink"
+modeKey = "K"
 
 [[hotkeys]]
 binding = "Control+Option+J"
 id = "resizeWindowSecondarySpan.grow"
+modeKey = "J"
 
 [[hotkeys]]
 binding = "Control+Option+B"
 id = "balanceSizes"
+modeKey = "B"
 
 [[hotkeys]]
 binding = "Unassigned"
@@ -1383,7 +1393,7 @@ binding = "Unassigned"
 id = "beginPrefix"
 
 [[hotkeys]]
-binding = "Unassigned"
+binding = "Option+R"
 id = "toggleWindowMode"
 
 [[hotkeys]]
@@ -1502,7 +1512,7 @@ monitorName = "Built-in Retina Display"
 outerGapBottom = 8.0
 outerGapLeft = 8.0
 outerGapRight = 8.0
-outerGapTop = 38.0
+outerGapTop = 41.0
 
 [[workspaces]]
 id = "AD36F001-C57E-41A5-AC1D-DF5249D007F0"
